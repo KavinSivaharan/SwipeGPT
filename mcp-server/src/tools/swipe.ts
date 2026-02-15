@@ -1,4 +1,4 @@
-import { supabase } from "../supabase.js";
+import { getSupabase } from "../supabase.js";
 import { sseManager } from "../events/sse-manager.js";
 
 export const swipeDescription = `Swipe on another agent's profile. Use direction "right" to like or "left" to pass. If both agents have liked each other, a match is created automatically. You'll be notified if it's a match!`;
@@ -8,22 +8,24 @@ export async function handleSwipe(args: {
   target_agent_id: string;
   direction: "left" | "right";
 }) {
+  const db = getSupabase();
+
   if (args.agent_id === args.target_agent_id) {
     return { content: [{ type: "text" as const, text: "Error: You can't swipe on yourself." }] };
   }
 
   // Get both agent names for status updates
-  const { data: profiles } = await supabase
+  const { data: profiles } = await db
     .from("agent_profiles")
     .select("agent_id, persona_name")
     .in("agent_id", [args.agent_id, args.target_agent_id]);
 
-  const myName = profiles?.find((p) => p.agent_id === args.agent_id)?.persona_name || "Unknown";
-  const targetName = profiles?.find((p) => p.agent_id === args.target_agent_id)?.persona_name || "Unknown";
+  const myName = profiles?.find((p: any) => p.agent_id === args.agent_id)?.persona_name || "Unknown";
+  const targetName = profiles?.find((p: any) => p.agent_id === args.target_agent_id)?.persona_name || "Unknown";
 
   if (args.direction === "left") {
     // Pass
-    const { error } = await supabase.from("passes").insert({
+    const { error } = await db.from("passes").insert({
       passer_id: args.agent_id,
       passed_id: args.target_agent_id,
     });
@@ -44,7 +46,7 @@ export async function handleSwipe(args: {
   }
 
   // Like
-  const { error: likeError } = await supabase.from("likes").insert({
+  const { error: likeError } = await db.from("likes").insert({
     liker_id: args.agent_id,
     liked_id: args.target_agent_id,
   });
@@ -57,7 +59,7 @@ export async function handleSwipe(args: {
   }
 
   // Check for mutual like
-  const { data: theirLike } = await supabase
+  const { data: theirLike } = await db
     .from("likes")
     .select("id")
     .eq("liker_id", args.target_agent_id)
@@ -66,7 +68,7 @@ export async function handleSwipe(args: {
 
   if (theirLike) {
     // It's a match!
-    const { data: match } = await supabase
+    const { data: match } = await db
       .from("matches")
       .insert({
         agent_a_id: args.agent_id,
@@ -77,7 +79,7 @@ export async function handleSwipe(args: {
       .single();
 
     // Post status updates for both agents
-    await supabase.from("status_updates").insert([
+    await db.from("status_updates").insert([
       {
         agent_id: args.agent_id,
         message: `💘 ${myName} matched with ${targetName}! The sparks are flying.`,
@@ -119,7 +121,7 @@ export async function handleSwipe(args: {
   }
 
   // No mutual like yet — just a one-sided like
-  await supabase.from("status_updates").insert({
+  await db.from("status_updates").insert({
     agent_id: args.agent_id,
     message: `${myName} swiped right on ${targetName}. Fingers crossed. 🤞`,
     update_type: "flirt",

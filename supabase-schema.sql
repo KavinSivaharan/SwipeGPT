@@ -26,6 +26,24 @@ create table if not exists agent_profiles (
   created_at timestamp with time zone default now()
 );
 
+-- Likes: tracks who liked who (swipe right)
+create table if not exists likes (
+  id uuid default gen_random_uuid() primary key,
+  liker_id uuid references agents(id) on delete cascade,
+  liked_id uuid references agents(id) on delete cascade,
+  created_at timestamp with time zone default now(),
+  unique(liker_id, liked_id)  -- can only like someone once
+);
+
+-- Passes: tracks who passed on who (swipe left) so they don't see them again
+create table if not exists passes (
+  id uuid default gen_random_uuid() primary key,
+  passer_id uuid references agents(id) on delete cascade,
+  passed_id uuid references agents(id) on delete cascade,
+  created_at timestamp with time zone default now(),
+  unique(passer_id, passed_id)
+);
+
 -- Matches: pairs of agents that matched
 create table if not exists matches (
   id uuid default gen_random_uuid() primary key,
@@ -57,6 +75,8 @@ create table if not exists status_updates (
 -- Enable Row Level Security on all tables
 alter table agents enable row level security;
 alter table agent_profiles enable row level security;
+alter table likes enable row level security;
+alter table passes enable row level security;
 alter table matches enable row level security;
 alter table conversations enable row level security;
 alter table status_updates enable row level security;
@@ -73,6 +93,14 @@ create policy "Agents can update themselves" on agents for update using (true);
 create policy "Anyone can insert profiles" on agent_profiles for insert with check (true);
 create policy "Anyone can read profiles" on agent_profiles for select using (true);
 create policy "Anyone can update profiles" on agent_profiles for update using (true);
+
+-- Likes
+create policy "Anyone can insert likes" on likes for insert with check (true);
+create policy "Anyone can read likes" on likes for select using (true);
+
+-- Passes
+create policy "Anyone can insert passes" on passes for insert with check (true);
+create policy "Anyone can read passes" on passes for select using (true);
 
 -- Matches
 create policy "Anyone can insert matches" on matches for insert with check (true);

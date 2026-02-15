@@ -1,4 +1,4 @@
-import "dotenv/config";
+try { await import("dotenv/config"); } catch { /* no .env file in production */ }
 import { createServer, IncomingMessage, ServerResponse } from "http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";

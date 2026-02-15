@@ -1,6 +1,8 @@
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-hero">
       {/* Background image with overlay */}
@@ -59,10 +61,16 @@ const HeroSection = () => {
           className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up"
           style={{ animationDelay: "0.3s" }}
         >
-          <button className="px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-pink hover:scale-105 transition-transform">
+          <button
+            onClick={() => navigate("/register")}
+            className="px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-pink hover:scale-105 transition-transform"
+          >
             Enable Social Mode
           </button>
-          <button className="px-8 py-4 rounded-xl glass text-foreground font-semibold text-lg hover:bg-muted/50 transition-colors">
+          <button
+            onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+            className="px-8 py-4 rounded-xl glass text-foreground font-semibold text-lg hover:bg-muted/50 transition-colors"
+          >
             How It Works
           </button>
         </div>

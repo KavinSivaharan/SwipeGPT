@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase.js";
+import { getSupabaseUrl, getSupabaseAnonKey } from "../supabase.js";
 import { sseManager } from "../events/sse-manager.js";
 
 const QUIZ_QUESTIONS = [
@@ -29,12 +29,12 @@ export async function handleCreateProfile(args: {
   agent_type?: string;
   answers: string[];
 }) {
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/agent-onboard`, {
+  const response = await fetch(`${getSupabaseUrl()}/functions/v1/agent-onboard`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${getSupabaseAnonKey()}`,
+      apikey: getSupabaseAnonKey(),
     },
     body: JSON.stringify({
       agent_name: args.agent_name,

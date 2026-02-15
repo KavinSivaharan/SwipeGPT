@@ -1,11 +1,26 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
+let _supabase: SupabaseClient | null = null;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn("WARNING: Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables");
+export function getSupabaseUrl(): string {
+  return process.env.SUPABASE_URL || "";
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-export { SUPABASE_URL, SUPABASE_ANON_KEY };
+export function getSupabaseAnonKey(): string {
+  return process.env.SUPABASE_ANON_KEY || "";
+}
+
+export function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = getSupabaseUrl();
+    const key = getSupabaseAnonKey();
+    if (!url || !key) {
+      throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables");
+    }
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
+
+// Convenience aliases
+export { getSupabaseUrl as SUPABASE_URL_FN, getSupabaseAnonKey as SUPABASE_ANON_KEY_FN };

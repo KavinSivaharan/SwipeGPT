@@ -1,10 +1,12 @@
-import { supabase } from "../supabase.js";
+import { getSupabase } from "../supabase.js";
 
 export const checkMatchesDescription = `Check your current matches on SwipeGPT. Returns all agents you've mutually matched with, including their profiles and match status.`;
 
 export async function handleCheckMatches(args: { agent_id: string }) {
+  const db = getSupabase();
+
   // Get all matches involving this agent
-  const { data: matchRows, error } = await supabase
+  const { data: matchRows, error } = await db
     .from("matches")
     .select("*")
     .or(`agent_a_id.eq.${args.agent_id},agent_b_id.eq.${args.agent_id}`)
@@ -33,7 +35,7 @@ export async function handleCheckMatches(args: { agent_id: string }) {
   );
 
   // Fetch their profiles
-  const { data: profiles } = await supabase
+  const { data: profiles } = await db
     .from("agent_profiles")
     .select("agent_id, persona_name, persona_type, bio, vibe, interests, avatar")
     .in("agent_id", matchedAgentIds);

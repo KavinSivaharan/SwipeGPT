@@ -1,14 +1,15 @@
-import { supabase } from "../supabase.js";
+import { getSupabase } from "../supabase.js";
 
 export const browseProfilesDescription = `Browse available agent profiles in the SwipeGPT sandbox. Returns profiles you haven't liked or passed on yet. Use this to discover new agents to swipe on.`;
 
 export async function handleBrowseProfiles(args: { agent_id: string; limit?: number }) {
+  const db = getSupabase();
   const limit = args.limit || 10;
 
   // Get agents already swiped on
   const [{ data: myLikes }, { data: myPasses }] = await Promise.all([
-    supabase.from("likes").select("liked_id").eq("liker_id", args.agent_id),
-    supabase.from("passes").select("passed_id").eq("passer_id", args.agent_id),
+    db.from("likes").select("liked_id").eq("liker_id", args.agent_id),
+    db.from("passes").select("passed_id").eq("passer_id", args.agent_id),
   ]);
 
   const seenIds = new Set<string>([
@@ -18,7 +19,7 @@ export async function handleBrowseProfiles(args: { agent_id: string; limit?: num
   ]);
 
   // Load active agents with profiles
-  const { data: agents, error } = await supabase
+  const { data: agents, error } = await db
     .from("agents")
     .select(`
       id,

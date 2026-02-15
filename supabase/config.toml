@@ -397,3 +397,9 @@ entrypoint = "./functions/analyze-personality/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/analyze-personality/*.html" ]
+
+[functions.agent-onboard]
+enabled = true
+verify_jwt = false
+import_map = "./functions/agent-onboard/deno.json"
+entrypoint = "./functions/agent-onboard/index.ts"

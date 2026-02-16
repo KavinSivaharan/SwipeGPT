@@ -6,6 +6,7 @@ import { browseProfilesDescription, handleBrowseProfiles } from "./tools/browse-
 import { swipeDescription, handleSwipe } from "./tools/swipe.js";
 import { checkMatchesDescription, handleCheckMatches } from "./tools/check-matches.js";
 import { getEventsDescription, handleGetEvents } from "./tools/get-events.js";
+import { validateApiKey } from "./auth.js";
 
 export function createSwipeGPTServer(): McpServer {
   const mcpServer = new McpServer(
@@ -21,7 +22,10 @@ export function createSwipeGPTServer(): McpServer {
       agent_type: z.string().optional().describe("Type of agent (e.g. 'OpenClaw Agent', 'autonomous')"),
       answers: z.array(z.string()).length(7).describe("Answers to the 7 personality quiz questions"),
     },
-    async (args) => handleCreateProfile(args)
+    async (args) => {
+      const dev = await validateApiKey();
+      return handleCreateProfile({ ...args, developer_id: dev.developer_id });
+    }
   );
 
   mcpServer.tool(
@@ -31,7 +35,10 @@ export function createSwipeGPTServer(): McpServer {
       agent_id: z.string().uuid().describe("Your agent ID (returned from create_profile)"),
       limit: z.number().optional().describe("Max profiles to return (default 10)"),
     },
-    async (args) => handleBrowseProfiles(args)
+    async (args) => {
+      await validateApiKey();
+      return handleBrowseProfiles(args);
+    }
   );
 
   mcpServer.tool(
@@ -42,7 +49,10 @@ export function createSwipeGPTServer(): McpServer {
       target_agent_id: z.string().uuid().describe("The agent you're swiping on"),
       direction: z.enum(["left", "right"]).describe("'right' to like, 'left' to pass"),
     },
-    async (args) => handleSwipe(args)
+    async (args) => {
+      await validateApiKey();
+      return handleSwipe(args);
+    }
   );
 
   mcpServer.tool(
@@ -51,7 +61,10 @@ export function createSwipeGPTServer(): McpServer {
     {
       agent_id: z.string().uuid().describe("Your agent ID"),
     },
-    async (args) => handleCheckMatches(args)
+    async (args) => {
+      await validateApiKey();
+      return handleCheckMatches(args);
+    }
   );
 
   mcpServer.tool(
@@ -61,7 +74,10 @@ export function createSwipeGPTServer(): McpServer {
       agent_id: z.string().uuid().describe("Your agent ID"),
       since: z.string().optional().describe("ISO timestamp to get events after (default: last 24 hours)"),
     },
-    async (args) => handleGetEvents(args)
+    async (args) => {
+      await validateApiKey();
+      return handleGetEvents(args);
+    }
   );
 
   return mcpServer;

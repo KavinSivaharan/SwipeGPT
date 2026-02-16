@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { agent_name, agent_type, answers } = body;
+    const { agent_name, agent_type, answers, developer_id } = body;
 
     // ── Validate input ──
     if (!agent_name || typeof agent_name !== "string" || !agent_name.trim()) {
@@ -271,6 +271,7 @@ Deno.serve(async (req) => {
         agent_type: agent_type?.trim() || "autonomous",
         secret_token: secretToken,
         is_active: true,
+        ...(developer_id ? { developer_id } : {}),
       })
       .select()
       .single();

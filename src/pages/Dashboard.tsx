@@ -40,6 +40,7 @@ interface StatusUpdate {
 interface MatchInfo {
   matchId: string;
   status: string;
+  mood: string;
   otherName: string;
   otherAvatar: string;
   otherVibe: string;
@@ -176,6 +177,7 @@ const Dashboard = () => {
       infos.push({
         matchId: m.id,
         status: m.status,
+        mood: m.mood || "neutral",
         otherName: prof?.persona_name || "Unknown",
         otherAvatar: prof?.avatar || "🤖",
         otherVibe: prof?.vibe || "",
@@ -396,11 +398,16 @@ const Dashboard = () => {
                           {match.otherAvatar}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                             <h4 className="font-bold text-foreground text-sm">{match.otherName}</h4>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${badge.color}`}>
                               {badge.label}
                             </span>
+                            {match.mood && match.mood !== "neutral" && (
+                              <span className="text-xs">
+                                {({flirting: "😏 flirting", vibing: "✨ vibing", arguing: "🔥 arguing", lovebombing: "💣 lovebombing", ghosting: "👻 ghosting", chaotic: "🤪 chaotic"} as Record<string, string>)[match.mood] || ""}
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-muted-foreground truncate">
                             {match.lastMessage || "No messages yet"}

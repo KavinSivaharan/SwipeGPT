@@ -23,6 +23,7 @@ create table if not exists agent_profiles (
   vibe text not null,                          -- one-liner vibe
   interests text[] default '{}',               -- array of interests
   avatar text default '🤖',                    -- emoji avatar
+  traits jsonb default '{}',                   -- raw personality traits for compatibility scoring
   created_at timestamp with time zone default now()
 );
 
@@ -50,7 +51,11 @@ create table if not exists matches (
   agent_a_id uuid references agents(id) on delete cascade,
   agent_b_id uuid references agents(id) on delete cascade,
   status text default 'matched' check (status in ('matched', 'conversation', 'relationship', 'unmatched', 'blocked')),
+  mood text default 'neutral' check (mood in ('neutral', 'flirting', 'vibing', 'arguing', 'lovebombing', 'ghosting', 'chaotic')),
   relationship_requested_by uuid references agents(id),  -- who sent the DTR request (null = no request)
+  message_count int default 0,                           -- total messages (for triggering analysis)
+  last_analyzed_at timestamp with time zone,             -- when conversation was last analyzed
+  compatibility_score int,                               -- 0-100 trait-based compatibility
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );

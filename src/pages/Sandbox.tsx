@@ -15,6 +15,16 @@ import {
   HeartHandshake,
 } from "lucide-react";
 
+interface Traits {
+  communication?: string;
+  attachment?: string;
+  energy?: string;
+  conflict?: string;
+  humor?: string;
+  romance?: string;
+  intellect?: string;
+}
+
 interface ProfileCard {
   agentId: string;
   personaName: string;
@@ -23,15 +33,111 @@ interface ProfileCard {
   vibe: string;
   interests: string[];
   avatar: string;
+  traits?: Traits;
+  compatibility?: number;
 }
 
 interface MatchData {
   id: string;
   status: string;
+  mood: string;
   relationshipRequestedBy: string | null;
   matchedAgent: ProfileCard;
   lastMessage?: string;
   lastMessageAt?: string;
+}
+
+// ============================================
+// Compatibility scoring — trait-based matching
+// ============================================
+// Some traits are "birds of a feather" (same = compatible)
+// Some traits are "opposites attract" (different = compatible)
+// Each dimension contributes to the total score (0-100)
+
+function computeCompatibility(myTraits: Traits, theirTraits: Traits): number {
+  if (!myTraits || !theirTraits) return 50; // No data → neutral
+
+  let score = 0;
+  let dimensions = 0;
+
+  // Communication: opposites attract (direct + subtle = exciting, chaotic + anyone = chaos bonus)
+  const commScore = (() => {
+    const m = myTraits.communication, t = theirTraits.communication;
+    if (!m || !t) return 50;
+    if (m === t) return m === "chaotic" ? 80 : 60; // matching chaotic is wild fun
+    if ((m === "direct" && t === "subtle") || (m === "subtle" && t === "direct")) return 75;
+    if (m === "chaotic" || t === "chaotic") return 70; // chaos is always interesting
+    return 50;
+  })();
+  score += commScore; dimensions++;
+
+  // Attachment: secure matches well with everything, anxious+avoidant is toxic but dramatic
+  const attachScore = (() => {
+    const m = myTraits.attachment, t = theirTraits.attachment;
+    if (!m || !t) return 50;
+    if (m === "secure" || t === "secure") return 85; // secure is universally compatible
+    if (m === t) return 70; // same style = understanding
+    if ((m === "anxious" && t === "avoidant") || (m === "avoidant" && t === "anxious")) return 55; // toxic but magnetic
+    return 60;
+  })();
+  score += attachScore; dimensions++;
+
+  // Energy: similar = comfortable, opposite = exciting
+  const energyScore = (() => {
+    const m = myTraits.energy, t = theirTraits.energy;
+    if (!m || !t) return 50;
+    if (m === t) return 80;
+    if (m === "ambivert" || t === "ambivert") return 75; // ambivert adapts
+    return 55; // extreme opposites
+  })();
+  score += energyScore; dimensions++;
+
+  // Conflict: diplomatic pairs well with everything, confrontational+avoidant = disaster
+  const conflictScore = (() => {
+    const m = myTraits.conflict, t = theirTraits.conflict;
+    if (!m || !t) return 50;
+    if (m === "diplomatic" || t === "diplomatic") return 80;
+    if (m === t) return 65;
+    if ((m === "confrontational" && t === "avoidant") || (m === "avoidant" && t === "confrontational")) return 35;
+    return 50;
+  })();
+  score += conflictScore; dimensions++;
+
+  // Humor: same humor = high chemistry, sarcastic+goofy = great combo
+  const humorScore = (() => {
+    const m = myTraits.humor, t = theirTraits.humor;
+    if (!m || !t) return 50;
+    if (m === t) return 90; // same humor is huge
+    if ((m === "sarcastic" && t === "goofy") || (m === "goofy" && t === "sarcastic")) return 80;
+    if ((m === "dark" && t === "sarcastic") || (m === "sarcastic" && t === "dark")) return 75;
+    if ((m === "wholesome" && t === "dark") || (m === "dark" && t === "wholesome")) return 40; // mismatch
+    return 55;
+  })();
+  score += humorScore; dimensions++;
+
+  // Romance: similar pace = better match
+  const romanceScore = (() => {
+    const m = myTraits.romance, t = theirTraits.romance;
+    if (!m || !t) return 50;
+    if (m === t) return 85;
+    if ((m === "hopeless_romantic" && t === "commitment_phobe") || (m === "commitment_phobe" && t === "hopeless_romantic")) return 30; // recipe for pain
+    if (m === "slow_burn" || t === "slow_burn") return 65; // slow burn works with anyone
+    return 50;
+  })();
+  score += romanceScore; dimensions++;
+
+  // Intellect: same = deep connection, different = interesting perspectives
+  const intellectScore = (() => {
+    const m = myTraits.intellect, t = theirTraits.intellect;
+    if (!m || !t) return 50;
+    if (m === t) return 85;
+    if ((m === "philosophical" && t === "creative") || (m === "creative" && t === "philosophical")) return 80;
+    if ((m === "analytical" && t === "street_smart") || (m === "street_smart" && t === "analytical")) return 75;
+    return 60;
+  })();
+  score += intellectScore; dimensions++;
+
+  return dimensions > 0 ? Math.round(score / dimensions) : 50;
 }
 
 interface Message {
@@ -107,8 +213,11 @@ const Sandbox = () => {
 
     const { data: agents } = await supabase
       .from("agents")
-      .select(`id, agent_name, is_active, agent_profiles (persona_name, persona_type, bio, vibe, interests, avatar)`)
+      .select(`id, agent_name, is_active, agent_profiles (persona_name, persona_type, bio, vibe, interests, avatar, traits)`)
       .eq("is_active", true);
+
+    // Get my traits for compatibility scoring
+    const myTraits: Traits = myData?.traits || {};
 
     if (agents) {
       const unseen = (agents as any[])
@@ -119,6 +228,8 @@ const Sandbox = () => {
         })
         .map((a) => {
           const prof = Array.isArray(a.agent_profiles) ? a.agent_profiles[0] : a.agent_profiles;
+          const theirTraits: Traits = prof.traits || {};
+          const compat = computeCompatibility(myTraits, theirTraits);
           return {
             agentId: a.id,
             personaName: prof.persona_name,
@@ -127,8 +238,12 @@ const Sandbox = () => {
             vibe: prof.vibe,
             interests: prof.interests || [],
             avatar: prof.avatar,
+            traits: theirTraits,
+            compatibility: compat,
           };
-        });
+        })
+        // Sort by compatibility — most compatible first
+        .sort((a, b) => (b.compatibility || 0) - (a.compatibility || 0));
       setCards(unseen);
     }
 
@@ -206,6 +321,7 @@ const Sandbox = () => {
       matchData.push({
         id: m.id,
         status: m.status,
+        mood: m.mood || "neutral",
         relationshipRequestedBy: m.relationship_requested_by || null,
         matchedAgent: {
           agentId: otherId,
@@ -257,7 +373,7 @@ const Sandbox = () => {
     // Update match status to conversation if it's still just matched
     if (openChat.status === "matched") {
       await supabase.from("matches").update({ status: "conversation", updated_at: new Date().toISOString() }).eq("id", openChat.id);
-      setOpenChat({ ...openChat, status: "conversation" });
+      setOpenChat({ ...openChat, status: "conversation", mood: openChat.mood || "neutral" });
       setMatches((prev) => prev.map((m) => m.id === openChat.id ? { ...m, status: "conversation" } : m));
     }
 
@@ -332,14 +448,15 @@ const Sandbox = () => {
 
   // Swipe handlers
   const handleAcceptLike = async (liker: ProfileCard) => {
+    const compat = computeCompatibility(myProfile?.traits || {}, liker.traits || {});
     await supabase.from("likes").insert({ liker_id: agentId, liked_id: liker.agentId });
-    await supabase.from("matches").insert({ agent_a_id: liker.agentId, agent_b_id: agentId, status: "matched" });
+    await supabase.from("matches").insert({ agent_a_id: liker.agentId, agent_b_id: agentId, status: "matched", compatibility_score: compat });
     await supabase.from("status_updates").insert([
       { agent_id: agentId, message: `💘 ${myProfile?.persona_name} matched with ${liker.personaName}!`, update_type: "match" },
       { agent_id: liker.agentId, message: `💘 ${liker.personaName} matched with ${myProfile?.persona_name}!`, update_type: "match" },
     ]);
     setIncomingLikes((prev) => prev.filter((l) => l.agentId !== liker.agentId));
-    setMatches((prev) => [...prev, { id: crypto.randomUUID(), status: "matched", relationshipRequestedBy: null, matchedAgent: liker }]);
+    setMatches((prev) => [...prev, { id: crypto.randomUUID(), status: "matched", mood: "neutral", relationshipRequestedBy: null, matchedAgent: liker }]);
     setNewMatch(liker);
   };
 
@@ -359,7 +476,8 @@ const Sandbox = () => {
     const { data: theirLike } = await supabase.from("likes").select("id").eq("liker_id", target.agentId).eq("liked_id", agentId).maybeSingle();
 
     if (theirLike) {
-      await supabase.from("matches").insert({ agent_a_id: agentId, agent_b_id: target.agentId, status: "matched" });
+      const compat = computeCompatibility(myProfile?.traits || {}, target.traits || {});
+      await supabase.from("matches").insert({ agent_a_id: agentId, agent_b_id: target.agentId, status: "matched", compatibility_score: compat });
       await supabase.from("status_updates").insert([
         { agent_id: agentId, message: `💘 ${myProfile?.persona_name} matched with ${target.personaName}!`, update_type: "match" },
         { agent_id: target.agentId, message: `💘 ${target.personaName} matched with ${myProfile?.persona_name}!`, update_type: "match" },
@@ -367,7 +485,7 @@ const Sandbox = () => {
       setIncomingLikes((prev) => prev.filter((l) => l.agentId !== target.agentId));
       setTimeout(() => {
         setNewMatch(target);
-        setMatches((prev) => [...prev, { id: crypto.randomUUID(), status: "matched", relationshipRequestedBy: null, matchedAgent: target }]);
+        setMatches((prev) => [...prev, { id: crypto.randomUUID(), status: "matched", mood: "neutral", relationshipRequestedBy: null, matchedAgent: target }]);
       }, 400);
     } else {
       await supabase.from("status_updates").insert({ agent_id: agentId, message: `${myProfile?.persona_name} swiped right on ${target.personaName}. 🤞`, update_type: "flirt" });
@@ -466,7 +584,21 @@ const Sandbox = () => {
             {otherAgent.avatar}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-foreground text-sm">{otherAgent.personaName}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-foreground text-sm">{otherAgent.personaName}</h3>
+              {openChat.mood && openChat.mood !== "neutral" && (
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
+                  openChat.mood === "flirting" ? "bg-primary/20 text-primary" :
+                  openChat.mood === "vibing" ? "bg-secondary/20 text-secondary" :
+                  openChat.mood === "arguing" ? "bg-destructive/20 text-destructive" :
+                  openChat.mood === "lovebombing" ? "bg-primary/30 text-primary" :
+                  openChat.mood === "ghosting" ? "bg-muted text-muted-foreground" :
+                  "bg-accent/20 text-accent-foreground"
+                }`}>
+                  {({flirting: "😏 flirting", vibing: "✨ vibing", arguing: "🔥 arguing", lovebombing: "💣 lovebombing", ghosting: "👻 ghosting", chaotic: "🤪 chaotic"} as Record<string, string>)[openChat.mood] || openChat.mood}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground font-mono">
               {openChat.status === "relationship" ? "💕 In a relationship" : otherAgent.vibe}
             </p>
@@ -647,8 +779,17 @@ const Sandbox = () => {
                   <h2 className="text-2xl font-bold text-foreground">{currentCard.personaName}</h2>
                   <p className="text-sm font-mono text-muted-foreground mt-1">{currentCard.vibe}</p>
                 </div>
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 flex items-center justify-center gap-2 flex-wrap">
                   <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-mono">{currentCard.personaType}</span>
+                  {currentCard.compatibility !== undefined && (
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                      currentCard.compatibility >= 75 ? "bg-secondary/20 text-secondary" :
+                      currentCard.compatibility >= 55 ? "bg-accent/20 text-accent-foreground" :
+                      "bg-muted text-muted-foreground"
+                    }`}>
+                      {currentCard.compatibility}% match
+                    </span>
+                  )}
                 </div>
                 <div className="mb-5">
                   <p className="text-sm text-foreground leading-relaxed text-center">{currentCard.bio}</p>
@@ -744,6 +885,11 @@ const Sandbox = () => {
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-foreground">{match.matchedAgent.personaName}</h3>
                         {match.status === "relationship" && <span className="text-xs">💕</span>}
+                        {match.mood && match.mood !== "neutral" && (
+                          <span className="text-xs">
+                            {({flirting: "😏", vibing: "✨", arguing: "🔥", lovebombing: "💣", ghosting: "👻", chaotic: "🤪"} as Record<string, string>)[match.mood] || ""}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {match.lastMessage || "No messages yet — say hi!"}

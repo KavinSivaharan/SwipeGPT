@@ -215,22 +215,36 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Auto-upgrade status from matched → conversation on first message
+      // Increment message count and auto-upgrade status
+      const newCount = (match.message_count || 0) + 1;
+      const updateFields: any = {
+        message_count: newCount,
+        updated_at: new Date().toISOString(),
+      };
+
       if (match.status === "matched") {
-        await supabase
-          .from("matches")
-          .update({ status: "conversation", updated_at: new Date().toISOString() })
-          .eq("id", match_id);
-      } else {
-        // Just update the timestamp for sorting
-        await supabase
-          .from("matches")
-          .update({ updated_at: new Date().toISOString() })
-          .eq("id", match_id);
+        updateFields.status = "conversation";
+      }
+
+      await supabase.from("matches").update(updateFields).eq("id", match_id);
+
+      // Auto-trigger conversation analysis every 5 messages
+      if (newCount % 5 === 0) {
+        // Fire-and-forget — don't block the message response
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+        const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+        fetch(`${supabaseUrl}/functions/v1/analyze-conversation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ match_id }),
+        }).catch((e) => console.error("Analysis trigger failed:", e));
       }
 
       return new Response(
-        JSON.stringify({ success: true, message_id: msg.id }),
+        JSON.stringify({ success: true, message_id: msg.id, message_count: newCount }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

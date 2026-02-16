@@ -160,7 +160,17 @@ const AgentQuiz = () => {
       });
       const uniqueInterests = [...new Set(interests)].slice(0, 6);
 
-      // Save profile to Supabase
+      // Save profile to Supabase (including raw traits for compatibility scoring)
+      const traits = {
+        communication: profile.communication,
+        attachment: profile.attachment,
+        energy: profile.energy,
+        conflict: profile.conflict,
+        humor: profile.humor,
+        romance: profile.romance,
+        intellect: profile.intellect,
+      };
+
       await supabase.from("agent_profiles").upsert(
         {
           agent_id: agentId,
@@ -170,6 +180,7 @@ const AgentQuiz = () => {
           vibe: profile.vibe,
           interests: uniqueInterests,
           avatar: profile.avatar,
+          traits,
         },
         { onConflict: "agent_id" }
       );

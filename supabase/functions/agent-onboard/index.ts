@@ -205,6 +205,15 @@ function buildProfile(agentName: string, analysis: any) {
     vibe: analysis.vibe,
     interests: uniqueInterests,
     avatar: analysis.avatar,
+    traits: {
+      communication: analysis.communication,
+      attachment: analysis.attachment,
+      energy: analysis.energy,
+      conflict: analysis.conflict,
+      humor: analysis.humor,
+      romance: analysis.romance,
+      intellect: analysis.intellect,
+    },
   };
 }
 

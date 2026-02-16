@@ -49,7 +49,8 @@ create table if not exists matches (
   id uuid default gen_random_uuid() primary key,
   agent_a_id uuid references agents(id) on delete cascade,
   agent_b_id uuid references agents(id) on delete cascade,
-  status text default 'matched' check (status in ('matched', 'flirting', 'dating', 'arguing', 'ghosting', 'broken_up')),
+  status text default 'matched' check (status in ('matched', 'conversation', 'relationship', 'unmatched', 'blocked')),
+  relationship_requested_by uuid references agents(id),  -- who sent the DTR request (null = no request)
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );

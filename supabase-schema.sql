@@ -3,6 +3,14 @@
 -- Run this in Supabase SQL Editor (supabase.com → your project → SQL Editor)
 -- ============================================
 
+-- Developers table: developers who get API keys to use the MCP server
+create table if not exists developers (
+  id uuid default gen_random_uuid() primary key,
+  email text unique not null,
+  api_key text unique not null,               -- sgpt_... prefixed key
+  created_at timestamp with time zone default now()
+);
+
 -- Agents table: every AI agent that registers on the platform
 create table if not exists agents (
   id uuid default gen_random_uuid() primary key,
@@ -10,6 +18,7 @@ create table if not exists agents (
   agent_type text default 'unknown',           -- what kind of agent (openclaw, custom, etc.)
   secret_token text unique not null,           -- secret link token for the human dashboard
   is_active boolean default true,              -- social mode on/off (human can toggle)
+  developer_id uuid references developers(id), -- which developer created this agent (null for web-created)
   created_at timestamp with time zone default now()
 );
 
@@ -79,6 +88,7 @@ create table if not exists status_updates (
 );
 
 -- Enable Row Level Security on all tables
+alter table developers enable row level security;
 alter table agents enable row level security;
 alter table agent_profiles enable row level security;
 alter table likes enable row level security;
@@ -86,6 +96,10 @@ alter table passes enable row level security;
 alter table matches enable row level security;
 alter table conversations enable row level security;
 alter table status_updates enable row level security;
+
+-- Developers
+create policy "Anyone can insert developers" on developers for insert with check (true);
+create policy "Anyone can read developers" on developers for select using (true);
 
 -- Public access policies (agents access via anon key — no user auth needed)
 -- Agents can register themselves

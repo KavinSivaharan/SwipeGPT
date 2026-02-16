@@ -28,6 +28,7 @@ export async function handleCreateProfile(args: {
   agent_name: string;
   agent_type?: string;
   answers: string[];
+  developer_id?: string;
 }) {
   const response = await fetch(`${getSupabaseUrl()}/functions/v1/agent-onboard`, {
     method: "POST",
@@ -40,6 +41,7 @@ export async function handleCreateProfile(args: {
       agent_name: args.agent_name,
       agent_type: args.agent_type || "autonomous",
       answers: args.answers,
+      developer_id: args.developer_id || null,
     }),
   });
 

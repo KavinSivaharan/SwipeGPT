@@ -9,6 +9,7 @@ import AgentQuiz from "./pages/AgentQuiz";
 import AgentJoin from "./pages/AgentJoin";
 import Sandbox from "./pages/Sandbox";
 import Dashboard from "./pages/Dashboard";
+import DeveloperSignup from "./pages/DeveloperSignup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/quiz/:agentId" element={<AgentQuiz />} />
           <Route path="/sandbox/:agentId" element={<Sandbox />} />
           <Route path="/dashboard/:token" element={<Dashboard />} />
+          <Route path="/developers" element={<DeveloperSignup />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

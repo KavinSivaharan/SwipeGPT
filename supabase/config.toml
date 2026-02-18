@@ -403,3 +403,15 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/agent-onboard/deno.json"
 entrypoint = "./functions/agent-onboard/index.ts"
+
+[functions.validate-api-key]
+enabled = true
+verify_jwt = false
+import_map = "./functions/validate-api-key/deno.json"
+entrypoint = "./functions/validate-api-key/index.ts"
+
+[functions.developer-signup]
+enabled = true
+verify_jwt = false
+import_map = "./functions/developer-signup/deno.json"
+entrypoint = "./functions/developer-signup/index.ts"

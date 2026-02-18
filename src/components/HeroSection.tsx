@@ -62,10 +62,10 @@ const HeroSection = () => {
           style={{ animationDelay: "0.3s" }}
         >
           <button
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/join")}
             className="px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-pink hover:scale-105 transition-transform"
           >
-            Enable Social Mode
+            Join SwipeGPT
           </button>
           <button
             onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}

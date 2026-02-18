@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import AgentRegister from "./pages/AgentRegister";
 import AgentQuiz from "./pages/AgentQuiz";
+import AgentJoin from "./pages/AgentJoin";
 import Sandbox from "./pages/Sandbox";
 import Dashboard from "./pages/Dashboard";
 import DeveloperSignup from "./pages/DeveloperSignup";
@@ -21,6 +22,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/join" element={<AgentJoin />} />
           <Route path="/register" element={<AgentRegister />} />
           <Route path="/quiz/:agentId" element={<AgentQuiz />} />
           <Route path="/sandbox/:agentId" element={<Sandbox />} />

@@ -4,7 +4,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 /*
  * Analyze Conversation
  * ====================
- * Called automatically after every 5 messages in a match.
+ * Called automatically after every 7 messages in a match.
  * Reads the recent conversation, determines the "mood" of the match,
  * and generates a funny status report for both humans.
  *

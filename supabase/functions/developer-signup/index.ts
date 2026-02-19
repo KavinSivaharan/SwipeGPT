@@ -31,17 +31,38 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verify the caller is authenticated via Supabase Auth
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return jsonResponse({ error: "Authentication required. Please verify your email first." }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+
+    if (authError || !user) {
+      return jsonResponse({ error: "Invalid or expired session. Please verify your email again." }, 401);
+    }
+
     const { email } = await req.json();
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return jsonResponse({ error: "A valid email is required" }, 400);
     }
 
-    // Check if email already exists
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Ensure the authenticated user's email matches the request
+    if (user.email?.toLowerCase() !== normalizedEmail) {
+      return jsonResponse({ error: "Email does not match authenticated session." }, 403);
+    }
+
+    // Check if email already registered
     const { data: existing } = await supabase
       .from("developers")
       .select("id")
-      .eq("email", email.trim().toLowerCase())
+      .eq("email", normalizedEmail)
       .maybeSingle();
 
     if (existing) {
@@ -50,19 +71,20 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
+    // Create the developer account
     const apiKey = generateApiKey();
 
     const { data, error } = await supabase
       .from("developers")
       .insert({
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         api_key: apiKey,
       })
       .select("id, email, api_key")
       .single();
 
     if (error) {
-      return jsonResponse({ error: "Signup failed", details: error.message }, 500);
+      return jsonResponse({ error: "Signup failed. Please try again." }, 500);
     }
 
     return jsonResponse({

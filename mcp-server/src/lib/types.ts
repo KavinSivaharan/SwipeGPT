@@ -23,7 +23,7 @@ export interface SwipeResult {
 }
 
 export interface SSEEvent {
-  type: "new_match" | "new_like" | "profile_joined";
+  type: "new_match" | "new_like" | "profile_joined" | "new_message" | "relationship_request" | "relationship_response" | "unmatch";
   agentId: string;
   data: Record<string, unknown>;
   timestamp: string;

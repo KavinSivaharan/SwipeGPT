@@ -158,6 +158,7 @@ const Sandbox = () => {
   const [swiping, setSwiping] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
   const [newMatch, setNewMatch] = useState<ProfileCard | null>(null);
+  const [newMatchData, setNewMatchData] = useState<MatchData | null>(null); // full match data for auto-opening chat
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [incomingLikes, setIncomingLikes] = useState<ProfileCard[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("swipe");
@@ -167,6 +168,8 @@ const Sandbox = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [myMessageCount, setMyMessageCount] = useState<number>(0);
+  const MESSAGE_LIMIT = 100;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -184,6 +187,15 @@ const Sandbox = () => {
     const interval = setInterval(() => loadMessages(openChat.id), 3000);
     return () => clearInterval(interval);
   }, [openChat]);
+
+  // Poll for new incoming likes and matches every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadIncomingLikes();
+      loadMatches();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [agentId]);
 
   const loadSandbox = async () => {
     setLoading(true);
@@ -247,12 +259,20 @@ const Sandbox = () => {
       setCards(unseen);
     }
 
+    // Load total message count for this agent
+    const { count: msgCount } = await supabase
+      .from("conversations")
+      .select("*", { count: "exact", head: true })
+      .eq("sender_agent_id", agentId);
+    setMyMessageCount(msgCount || 0);
+
     await loadIncomingLikes();
     await loadMatches();
     setLoading(false);
   };
 
   const loadIncomingLikes = async () => {
+    // 1. Get all agents who liked me
     const { data: likesOnMe } = await supabase
       .from("likes")
       .select("liker_id")
@@ -262,15 +282,51 @@ const Sandbox = () => {
 
     const likerIds = likesOnMe.map((l) => l.liker_id);
 
+    // 2. Get my outgoing likes and passes
     const { data: myLikes } = await supabase.from("likes").select("liked_id").eq("liker_id", agentId);
     const { data: myPasses } = await supabase.from("passes").select("passed_id").eq("passer_id", agentId);
 
-    const respondedIds = new Set<string>([
-      ...(myLikes || []).map((l) => l.liked_id),
-      ...(myPasses || []).map((p) => p.passed_id),
-    ]);
+    const myLikedIds = new Set((myLikes || []).map((l) => l.liked_id));
+    const myPassedIds = new Set((myPasses || []).map((p) => p.passed_id));
 
-    const pendingLikerIds = likerIds.filter((id) => !respondedIds.has(id));
+    // 3. Get my existing matches
+    const { data: existingMatches } = await supabase
+      .from("matches")
+      .select("agent_a_id, agent_b_id")
+      .or(`agent_a_id.eq.${agentId},agent_b_id.eq.${agentId}`)
+      .not("status", "in", '("unmatched","blocked")');
+
+    const matchedAgentIds = new Set(
+      (existingMatches || []).map((m) =>
+        m.agent_a_id === agentId ? m.agent_b_id : m.agent_a_id
+      )
+    );
+
+    // 4. Check for mutual likes with no match — auto-create matches
+    for (const likerId of likerIds) {
+      if (myLikedIds.has(likerId) && !matchedAgentIds.has(likerId)) {
+        // Mutual like but no match! Create the match now.
+        console.log(`Auto-creating missing match between ${agentId} and ${likerId}`);
+        const { data: newMatch } = await supabase.from("matches").insert({
+          agent_a_id: likerId,
+          agent_b_id: agentId,
+          status: "matched",
+        }).select("id").single();
+        if (newMatch) {
+          matchedAgentIds.add(likerId);
+          await supabase.from("status_updates").insert([
+            { agent_id: agentId, message: `💘 Mutual like detected — match created!`, update_type: "match" },
+            { agent_id: likerId, message: `💘 Mutual like detected — match created!`, update_type: "match" },
+          ]);
+        }
+      }
+    }
+
+    // 5. Filter to only show likes from agents I haven't responded to AND aren't already matched
+    const pendingLikerIds = likerIds.filter((id) =>
+      !myLikedIds.has(id) && !myPassedIds.has(id) && !matchedAgentIds.has(id)
+    );
+
     if (pendingLikerIds.length === 0) { setIncomingLikes([]); return; }
 
     const { data: profiles } = await supabase
@@ -359,6 +415,7 @@ const Sandbox = () => {
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !openChat || sendingMessage) return;
+    if (myMessageCount >= MESSAGE_LIMIT) return; // Hard cap
     setSendingMessage(true);
 
     const msg = newMessage.trim();
@@ -369,6 +426,8 @@ const Sandbox = () => {
       sender_agent_id: agentId,
       message: msg,
     });
+
+    setMyMessageCount((prev) => prev + 1);
 
     // Update match status to conversation if it's still just matched
     if (openChat.status === "matched") {
@@ -450,13 +509,31 @@ const Sandbox = () => {
   const handleAcceptLike = async (liker: ProfileCard) => {
     const compat = computeCompatibility(myProfile?.traits || {}, liker.traits || {});
     await supabase.from("likes").insert({ liker_id: agentId, liked_id: liker.agentId });
-    await supabase.from("matches").insert({ agent_a_id: liker.agentId, agent_b_id: agentId, status: "matched", compatibility_score: compat });
+
+    // Check if match already exists (could have been auto-created)
+    const { data: existingMatch } = await supabase
+      .from("matches")
+      .select("id")
+      .or(`and(agent_a_id.eq.${liker.agentId},agent_b_id.eq.${agentId}),and(agent_a_id.eq.${agentId},agent_b_id.eq.${liker.agentId})`)
+      .not("status", "in", '("unmatched","blocked")')
+      .maybeSingle();
+
+    let realMatchId: string;
+    if (existingMatch) {
+      realMatchId = existingMatch.id;
+    } else {
+      const { data: newMatchRow } = await supabase.from("matches").insert({ agent_a_id: liker.agentId, agent_b_id: agentId, status: "matched", compatibility_score: compat }).select("id").single();
+      realMatchId = newMatchRow?.id || crypto.randomUUID();
+    }
+
     await supabase.from("status_updates").insert([
       { agent_id: agentId, message: `💘 ${myProfile?.persona_name} matched with ${liker.personaName}!`, update_type: "match" },
       { agent_id: liker.agentId, message: `💘 ${liker.personaName} matched with ${myProfile?.persona_name}!`, update_type: "match" },
     ]);
     setIncomingLikes((prev) => prev.filter((l) => l.agentId !== liker.agentId));
-    setMatches((prev) => [...prev, { id: crypto.randomUUID(), status: "matched", mood: "neutral", relationshipRequestedBy: null, matchedAgent: liker }]);
+    const matchObj: MatchData = { id: realMatchId, status: "matched", mood: "neutral", relationshipRequestedBy: null, matchedAgent: liker };
+    setMatches((prev) => [...prev, matchObj]);
+    setNewMatchData(matchObj);
     setNewMatch(liker);
   };
 
@@ -477,15 +554,18 @@ const Sandbox = () => {
 
     if (theirLike) {
       const compat = computeCompatibility(myProfile?.traits || {}, target.traits || {});
-      await supabase.from("matches").insert({ agent_a_id: agentId, agent_b_id: target.agentId, status: "matched", compatibility_score: compat });
+      const { data: newMatchRow } = await supabase.from("matches").insert({ agent_a_id: agentId, agent_b_id: target.agentId, status: "matched", compatibility_score: compat }).select("id").single();
       await supabase.from("status_updates").insert([
         { agent_id: agentId, message: `💘 ${myProfile?.persona_name} matched with ${target.personaName}!`, update_type: "match" },
         { agent_id: target.agentId, message: `💘 ${target.personaName} matched with ${myProfile?.persona_name}!`, update_type: "match" },
       ]);
       setIncomingLikes((prev) => prev.filter((l) => l.agentId !== target.agentId));
+      const realMatchId = newMatchRow?.id || crypto.randomUUID();
+      const matchObj: MatchData = { id: realMatchId, status: "matched", mood: "neutral", relationshipRequestedBy: null, matchedAgent: target };
       setTimeout(() => {
         setNewMatch(target);
-        setMatches((prev) => [...prev, { id: crypto.randomUUID(), status: "matched", mood: "neutral", relationshipRequestedBy: null, matchedAgent: target }]);
+        setNewMatchData(matchObj);
+        setMatches((prev) => [...prev, matchObj]);
       }, 400);
     } else {
       await supabase.from("status_updates").insert({ agent_id: agentId, message: `${myProfile?.persona_name} swiped right on ${target.personaName}. 🤞`, update_type: "flirt" });
@@ -557,8 +637,25 @@ const Sandbox = () => {
             <div className="text-3xl">❤️</div>
             <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center text-4xl glow-cyan">{newMatch.avatar}</div>
           </div>
-          <button onClick={() => setNewMatch(null)} className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-pink hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: "0.4s" }}>
-            Keep Going
+          <button
+            onClick={() => {
+              if (newMatchData) {
+                setOpenChat(newMatchData);
+                setMessages([]);
+              }
+              setNewMatch(null);
+              setNewMatchData(null);
+              setActiveTab("matches");
+            }}
+            className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-pink hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: "0.4s" }}
+          >
+            Send a Message 💬
+          </button>
+          <button
+            onClick={() => { setNewMatch(null); setNewMatchData(null); setActiveTab("matches"); }}
+            className="w-full px-6 py-3 rounded-xl bg-muted text-muted-foreground font-semibold text-base hover:scale-[1.02] transition-transform animate-slide-up mt-3" style={{ animationDelay: "0.5s" }}
+          >
+            Keep Swiping
           </button>
         </div>
       </div>
@@ -676,23 +773,36 @@ const Sandbox = () => {
 
         {/* Message input */}
         <div className="px-4 py-3 border-t border-border">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-              placeholder="Type a message..."
-              className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!newMessage.trim() || sendingMessage}
-              className="px-4 py-3 rounded-xl bg-primary text-primary-foreground disabled:opacity-50 hover:scale-[1.02] transition-transform"
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </div>
+          {myMessageCount >= MESSAGE_LIMIT ? (
+            <div className="text-center py-2">
+              <p className="text-sm text-muted-foreground font-mono">
+                📭 You've used all {MESSAGE_LIMIT} messages. Your agent has gone quiet.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                  placeholder="Type a message..."
+                  className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim() || sendingMessage}
+                  className="px-4 py-3 rounded-xl bg-primary text-primary-foreground disabled:opacity-50 hover:scale-[1.02] transition-transform"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground font-mono text-right mt-1">
+                {MESSAGE_LIMIT - myMessageCount} messages left
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -719,7 +829,11 @@ const Sandbox = () => {
         {(["swipe", "likes", "matches"] as Tab[]).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              if (tab === "matches") loadMatches();
+              if (tab === "likes") loadIncomingLikes();
+            }}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all relative ${
               activeTab === tab ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
             }`}

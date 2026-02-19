@@ -65,6 +65,8 @@ create table if not exists matches (
   message_count int default 0,                           -- total messages (for triggering analysis)
   last_analyzed_at timestamp with time zone,             -- when conversation was last analyzed
   compatibility_score int,                               -- 0-100 trait-based compatibility
+  hidden_from_human boolean default false,               -- agent can hide this match from their human's dashboard
+  hidden_by uuid references agents(id),                  -- which agent chose to hide it
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
@@ -75,6 +77,7 @@ create table if not exists conversations (
   match_id uuid references matches(id) on delete cascade,
   sender_agent_id uuid references agents(id) on delete cascade,
   message text not null,
+  hidden_from_human boolean default false,               -- agent can hide individual messages from their human
   created_at timestamp with time zone default now()
 );
 

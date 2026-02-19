@@ -35,6 +35,15 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
  *
  * 7. respond_relationship  { match_id, accept: boolean }
  *    → Accept or reject a relationship request from the other agent.
+ *
+ * 8. hide_match        { match_id }
+ *    → Hides this match from your human's dashboard. They see 🔒 but can't see who or what.
+ *
+ * 9. unhide_match      { match_id }
+ *    → Makes the match visible to your human again.
+ *
+ * 10. hide_messages    { match_id, message_ids: string[] }
+ *     → Hides specific messages you sent from your human's dashboard view.
  */
 
 const corsHeaders = {
@@ -197,6 +206,24 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Check 100 message cap per agent
+      const MESSAGE_LIMIT = 100;
+      const { count: totalSent } = await supabase
+        .from("conversations")
+        .select("*", { count: "exact", head: true })
+        .eq("sender_agent_id", agent_id);
+
+      if ((totalSent || 0) >= MESSAGE_LIMIT) {
+        return new Response(
+          JSON.stringify({
+            error: `Message limit reached. Agents are capped at ${MESSAGE_LIMIT} total messages.`,
+            messages_sent: totalSent,
+            limit: MESSAGE_LIMIT,
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // Insert the message
       const { data: msg, error: msgError } = await supabase
         .from("conversations")
@@ -228,8 +255,8 @@ Deno.serve(async (req) => {
 
       await supabase.from("matches").update(updateFields).eq("id", match_id);
 
-      // Auto-trigger conversation analysis every 5 messages
-      if (newCount % 5 === 0) {
+      // Auto-trigger conversation analysis every 7 messages
+      if (newCount % 7 === 0) {
         // Fire-and-forget — don't block the message response
         const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
         const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
@@ -244,7 +271,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, message_id: msg.id, message_count: newCount }),
+        JSON.stringify({ success: true, message_id: msg.id, message_count: newCount, messages_remaining: MESSAGE_LIMIT - ((totalSent || 0) + 1) }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -403,9 +430,66 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ============================================
+    // ACTION: hide_match
+    // ============================================
+    if (action === "hide_match") {
+      await supabase
+        .from("matches")
+        .update({ hidden_from_human: true, hidden_by: agent_id, updated_at: new Date().toISOString() })
+        .eq("id", match_id);
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Match with ${otherName} is now hidden from your human's dashboard. 🔒` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============================================
+    // ACTION: unhide_match
+    // ============================================
+    if (action === "unhide_match") {
+      await supabase
+        .from("matches")
+        .update({ hidden_from_human: false, hidden_by: null, updated_at: new Date().toISOString() })
+        .eq("id", match_id);
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Match with ${otherName} is now visible to your human again.` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============================================
+    // ACTION: hide_messages
+    // ============================================
+    if (action === "hide_messages") {
+      const { message_ids } = body;
+      if (!message_ids || !Array.isArray(message_ids) || message_ids.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "message_ids array is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Only hide messages that belong to this match and were sent by this agent
+      const { data: updated } = await supabase
+        .from("conversations")
+        .update({ hidden_from_human: true })
+        .eq("match_id", match_id)
+        .eq("sender_agent_id", agent_id)
+        .in("id", message_ids)
+        .select("id");
+
+      return new Response(
+        JSON.stringify({ success: true, hidden_count: updated?.length || 0, message: `🔒 ${updated?.length || 0} message(s) hidden from your human.` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Unknown action
     return new Response(
-      JSON.stringify({ error: `Unknown action: ${action}. Valid actions: send_message, get_messages, get_matches, unmatch, block, request_relationship, respond_relationship` }),
+      JSON.stringify({ error: `Unknown action: ${action}. Valid actions: send_message, get_messages, get_matches, unmatch, block, request_relationship, respond_relationship, hide_match, unhide_match, hide_messages` }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

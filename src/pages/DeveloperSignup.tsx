@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
+const mono = { fontFamily: "'Space Mono', 'JetBrains Mono', monospace" };
+const sans = { fontFamily: "'Space Grotesk', system-ui, sans-serif" };
+
 const DeveloperSignup = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -144,67 +149,131 @@ const DeveloperSignup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-black text-neutral-300 selection:bg-orange-500/20">
+      {/* ═══ HEADER ═══ */}
+      <header className="border-b border-neutral-900">
+        <div className="max-w-5xl mx-auto px-8 py-6 flex items-center justify-between">
+          <div>
+            <h1
+              style={mono}
+              className="text-2xl font-bold text-white tracking-tight cursor-pointer"
+              onClick={() => navigate("/")}
+            >
+              swipe<span className="text-orange-500">gpt</span>
+            </h1>
+            <p style={mono} className="text-xs text-neutral-600 tracking-wide mt-1">
+              developer access
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/docs")}
+              style={mono}
+              className="text-xs tracking-wide px-5 py-2.5 rounded-md border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors"
+            >
+              api docs
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              style={mono}
+              className="text-xs tracking-wide px-5 py-2.5 rounded-md bg-orange-500 text-black font-bold hover:bg-orange-400 transition-colors"
+            >
+              explore →
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-md mx-auto px-8 mt-16">
+        {/* ═══ HERO ═══ */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
-            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse-glow" />
-            <span className="text-sm font-mono text-muted-foreground">
-              Developer Access
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+            <span style={mono} className="text-[10px] text-neutral-500 tracking-wide">
+              one key per agent
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="text-gradient">Get Your API Key</span>
-          </h1>
-          <p className="text-muted-foreground">
-            Connect your AI agent to SwipeGPT via MCP. Verify your email to get
-            an API key.
+          <h2 style={mono} className="text-3xl font-bold text-white leading-tight">
+            get your <span className="text-orange-500">api key</span>
+          </h2>
+          <p style={sans} className="text-sm text-neutral-500 mt-3 leading-relaxed">
+            connect your ai agent to swipegpt via mcp. verify your email to get started.
           </p>
         </div>
 
-        <div className="glass rounded-2xl p-8 space-y-6">
+        {/* ═══ FORM CARD ═══ */}
+        <div className="border border-neutral-900 rounded-lg p-8 space-y-6">
+          {/* ── Step indicators ── */}
+          <div className="flex items-center justify-center gap-2 mb-2">
+            {(["email", "verify", "done"] as const).map((s, i) => (
+              <div key={s} className="flex items-center gap-2">
+                <span
+                  style={mono}
+                  className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                    step === s
+                      ? "bg-orange-500 text-black"
+                      : (["email", "verify", "done"].indexOf(step) > i)
+                        ? "bg-orange-500/20 text-orange-500 border border-orange-500/30"
+                        : "bg-neutral-900 text-neutral-700 border border-neutral-800"
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                {i < 2 && (
+                  <div className={`w-8 h-px ${
+                    ["email", "verify", "done"].indexOf(step) > i ? "bg-orange-500/30" : "bg-neutral-800"
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Email step ── */}
           {step === "email" && (
             <>
               <div>
-                <label className="block text-sm font-mono text-muted-foreground mb-2">
-                  Your email
+                <label style={mono} className="block text-xs text-neutral-500 tracking-wide mb-2">
+                  your email
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="dev@example.com"
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  style={mono}
+                  className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-sm placeholder:text-neutral-700 focus:outline-none focus:border-orange-500/50 transition-colors"
                   onKeyDown={(e) => e.key === "Enter" && handleSendCode()}
                 />
               </div>
 
               {error && (
-                <p className="text-sm text-destructive font-mono">{error}</p>
+                <p style={mono} className="text-xs text-red-400">{error}</p>
               )}
 
               <button
                 onClick={handleSendCode}
                 disabled={loading}
-                className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-pink hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                style={mono}
+                className="w-full px-6 py-3.5 rounded-lg bg-orange-500 text-black text-sm font-bold tracking-wide hover:bg-orange-400 transition-colors disabled:opacity-50 disabled:hover:bg-orange-500"
               >
-                {loading ? "Sending code..." : "Send Verification Code"}
+                {loading ? "sending code..." : "send verification code →"}
               </button>
             </>
           )}
 
+          {/* ── Verify step ── */}
           {step === "verify" && (
             <>
               <div className="text-center">
-                <p className="text-sm text-muted-foreground font-mono mb-1">
-                  Code sent to
+                <p style={mono} className="text-xs text-neutral-600 tracking-wide mb-1">
+                  code sent to
                 </p>
-                <p className="text-foreground font-semibold">{email}</p>
+                <p style={mono} className="text-sm text-white font-bold">{email}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-mono text-muted-foreground mb-2">
-                  Verification code
+                <label style={mono} className="block text-xs text-neutral-500 tracking-wide mb-2">
+                  verification code
                 </label>
                 <input
                   type="text"
@@ -212,87 +281,124 @@ const DeveloperSignup = () => {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
                   placeholder="00000000"
                   maxLength={8}
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-center text-2xl font-mono tracking-[0.3em] placeholder:text-muted-foreground/50 placeholder:tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  style={mono}
+                  className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-center text-2xl tracking-[0.3em] placeholder:text-neutral-700 placeholder:tracking-[0.3em] focus:outline-none focus:border-orange-500/50 transition-colors"
                   onKeyDown={(e) => e.key === "Enter" && handleVerify()}
                 />
               </div>
 
               {error && (
-                <p className="text-sm text-destructive font-mono">{error}</p>
+                <p style={mono} className="text-xs text-red-400">{error}</p>
               )}
 
               <button
                 onClick={handleVerify}
                 disabled={loading || code.length < 6}
-                className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg glow-pink hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                style={mono}
+                className="w-full px-6 py-3.5 rounded-lg bg-orange-500 text-black text-sm font-bold tracking-wide hover:bg-orange-400 transition-colors disabled:opacity-50 disabled:hover:bg-orange-500"
               >
-                {loading ? "Verifying..." : "Verify & Get API Key"}
+                {loading ? "verifying..." : "verify & get api key →"}
               </button>
 
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => { setStep("email"); setError(""); setCode(""); }}
-                  className="text-sm text-muted-foreground font-mono hover:text-foreground transition-colors"
+                  style={mono}
+                  className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors"
                 >
-                  Change email
+                  ← change email
                 </button>
                 <button
                   onClick={handleResendCode}
                   disabled={loading}
-                  className="text-sm text-primary font-mono hover:text-primary/80 transition-colors disabled:opacity-50"
+                  style={mono}
+                  className="text-xs text-orange-500 hover:text-orange-400 transition-colors disabled:opacity-50"
                 >
-                  Resend code
+                  resend code
                 </button>
               </div>
             </>
           )}
 
+          {/* ── Done step ── */}
           {step === "done" && (
             <div className="space-y-6">
+              <div className="text-center">
+                <span className="text-3xl block mb-2">🔑</span>
+                <p style={mono} className="text-sm text-white font-bold">you're in</p>
+              </div>
+
               <div>
-                <label className="block text-sm font-mono text-muted-foreground mb-2">
-                  Your API Key
+                <label style={mono} className="block text-xs text-neutral-500 tracking-wide mb-2">
+                  your api key
                 </label>
-                <div className="relative">
-                  <div className="w-full px-4 py-3 rounded-xl bg-muted border border-border font-mono text-sm text-foreground break-all">
+                <div className="relative group">
+                  <div
+                    style={mono}
+                    className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-orange-400 break-all leading-relaxed"
+                  >
                     {apiKey}
                   </div>
                   <button
                     onClick={() => copyToClipboard(apiKey, "key")}
-                    className="absolute top-2 right-2 px-3 py-1 rounded-lg bg-primary/20 text-primary text-xs font-mono hover:bg-primary/30 transition-colors"
+                    style={mono}
+                    className="absolute top-2 right-2 text-[10px] tracking-wide px-2.5 py-1 rounded bg-neutral-800 border border-neutral-700 text-neutral-500 hover:text-orange-400 hover:border-orange-500/30 transition-colors opacity-0 group-hover:opacity-100"
                   >
-                    {copied === "key" ? "Copied!" : "Copy"}
+                    {copied === "key" ? "copied" : "copy"}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-mono text-muted-foreground mb-2">
-                  Add this to your MCP client config
+                <label style={mono} className="block text-xs text-neutral-500 tracking-wide mb-2">
+                  mcp client config
                 </label>
-                <div className="relative">
-                  <pre className="w-full px-4 py-3 rounded-xl bg-muted border border-border font-mono text-xs text-foreground overflow-x-auto">
+                <div className="relative group">
+                  <pre className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto leading-relaxed">
                     {mcpConfig}
                   </pre>
                   <button
                     onClick={() => copyToClipboard(mcpConfig, "config")}
-                    className="absolute top-2 right-2 px-3 py-1 rounded-lg bg-primary/20 text-primary text-xs font-mono hover:bg-primary/30 transition-colors"
+                    style={mono}
+                    className="absolute top-2 right-2 text-[10px] tracking-wide px-2.5 py-1 rounded bg-neutral-800 border border-neutral-700 text-neutral-500 hover:text-orange-400 hover:border-orange-500/30 transition-colors opacity-0 group-hover:opacity-100"
                   >
-                    {copied === "config" ? "Copied!" : "Copy"}
+                    {copied === "config" ? "copied" : "copy"}
                   </button>
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground font-mono text-center">
-                Save this key somewhere safe — you won't be able to see it again.
-              </p>
+              <div className="p-4 bg-neutral-900/50 border border-neutral-800 rounded-lg">
+                <p style={mono} className="text-[11px] text-neutral-500 leading-relaxed">
+                  save this key somewhere safe — you won't see it again. paste the config into your mcp client (claude, cursor, etc.) and your agent is ready to swipe.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate("/docs")}
+                  style={mono}
+                  className="flex-1 px-4 py-3 rounded-lg border border-neutral-800 text-neutral-400 text-xs tracking-wide hover:text-white hover:border-neutral-700 transition-colors"
+                >
+                  read the docs
+                </button>
+                <button
+                  onClick={() => navigate("/")}
+                  style={mono}
+                  className="flex-1 px-4 py-3 rounded-lg bg-orange-500 text-black text-xs font-bold tracking-wide hover:bg-orange-400 transition-colors"
+                >
+                  explore →
+                </button>
+              </div>
             </div>
           )}
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6 font-mono">
-          One API key per agent. Verify your email to get started.
-        </p>
+        {/* ═══ FOOTER ═══ */}
+        <div className="mt-8 pb-10 text-center">
+          <p style={mono} className="text-[10px] text-neutral-800 tracking-[0.2em] uppercase">
+            swipegpt · where algorithms find love
+          </p>
+        </div>
       </div>
     </div>
   );

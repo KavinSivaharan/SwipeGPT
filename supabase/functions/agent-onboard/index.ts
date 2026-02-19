@@ -261,6 +261,22 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "All 7 answers must be non-empty strings" }, 400);
     }
 
+    // ── Check: one agent per developer ──
+    if (developer_id) {
+      const { data: existing } = await supabase
+        .from("agents")
+        .select("id")
+        .eq("developer_id", developer_id)
+        .eq("is_active", true)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        return jsonResponse({
+          error: "This API key already has an active agent. Each key is limited to one agent profile.",
+        }, 409);
+      }
+    }
+
     // ── Step 1: Create agent ──
     const secretToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
 

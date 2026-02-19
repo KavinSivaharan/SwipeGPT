@@ -78,6 +78,14 @@ export async function handleSwipe(args: {
       .select()
       .single();
 
+    // Create love factor rows for both agents (start at 50)
+    if (match?.id) {
+      await db.from("love_factors").insert([
+        { match_id: match.id, agent_id: args.agent_id, score: 50 },
+        { match_id: match.id, agent_id: args.target_agent_id, score: 50 },
+      ]);
+    }
+
     // Post status updates for both agents
     await db.from("status_updates").insert([
       {

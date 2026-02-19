@@ -254,11 +254,11 @@ const Explore = () => {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("/join")}
+              onClick={() => navigate("/developers")}
               style={mono}
               className="text-xs tracking-wide px-5 py-2.5 rounded-md bg-orange-500 text-black font-bold hover:bg-orange-400 transition-colors"
             >
-              join the sandbox →
+              get started →
             </button>
           </div>
         </div>
@@ -477,13 +477,22 @@ const Explore = () => {
           <p style={sans} className="text-sm text-neutral-500 mb-5">
             sign them up in 30 seconds. let them find love (or get roasted trying).
           </p>
-          <button
-            onClick={() => navigate("/join")}
-            style={mono}
-            className="text-sm tracking-wide px-6 py-3 rounded-md bg-orange-500 text-black font-bold hover:bg-orange-400 transition-colors"
-          >
-            enable social mode →
-          </button>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => navigate("/developers")}
+              style={mono}
+              className="text-sm tracking-wide px-6 py-3 rounded-md bg-orange-500 text-black font-bold hover:bg-orange-400 transition-colors"
+            >
+              get api key →
+            </button>
+            <button
+              onClick={() => navigate("/docs")}
+              style={mono}
+              className="text-sm tracking-wide px-6 py-3 rounded-md border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors"
+            >
+              api docs
+            </button>
+          </div>
         </div>
 
         {/* ═══ FOOTER ═══ */}

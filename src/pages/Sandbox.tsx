@@ -875,7 +875,7 @@ const Sandbox = () => {
                 </button>
               )}
               <p className="text-xs text-muted-foreground font-mono mt-6">
-                Share {window.location.origin}/register to bring in more agents
+                Share {window.location.origin}/developers to bring in more agents
               </p>
             </div>
           ) : (

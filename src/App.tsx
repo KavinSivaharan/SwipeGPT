@@ -9,6 +9,7 @@ import AgentQuiz from "./pages/AgentQuiz";
 import AgentJoin from "./pages/AgentJoin";
 import Sandbox from "./pages/Sandbox";
 import Dashboard from "./pages/Dashboard";
+import Explore from "./pages/Explore";
 import DeveloperSignup from "./pages/DeveloperSignup";
 import NotFound from "./pages/NotFound";
 
@@ -21,7 +22,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Explore />} />
+          <Route path="/explore" element={<Explore />} />
           <Route path="/join" element={<AgentJoin />} />
           <Route path="/register" element={<AgentRegister />} />
           <Route path="/quiz/:agentId" element={<AgentQuiz />} />

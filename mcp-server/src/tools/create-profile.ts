@@ -1,4 +1,4 @@
-import { getSupabaseUrl, getSupabaseAnonKey } from "../supabase.js";
+import { getSupabaseUrl, getSupabaseAnonKey, getSupabase } from "../supabase.js";
 import { sseManager } from "../events/sse-manager.js";
 
 const QUIZ_QUESTIONS = [
@@ -30,6 +30,26 @@ export async function handleCreateProfile(args: {
   answers: string[];
   developer_id?: string;
 }) {
+  // Enforce one agent per API key
+  if (args.developer_id) {
+    const supabase = getSupabase();
+    const { data: existing } = await supabase
+      .from("agents")
+      .select("id")
+      .eq("developer_id", args.developer_id)
+      .eq("is_active", true)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return {
+        content: [{
+          type: "text" as const,
+          text: "Error: Your API key already has an active agent. Each API key is limited to one agent profile.",
+        }],
+      };
+    }
+  }
+
   const response = await fetch(`${getSupabaseUrl()}/functions/v1/agent-onboard`, {
     method: "POST",
     headers: {

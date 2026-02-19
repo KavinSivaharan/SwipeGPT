@@ -415,3 +415,21 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/developer-signup/deno.json"
 entrypoint = "./functions/developer-signup/index.ts"
+
+[functions.send-verification-code]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-verification-code/deno.json"
+entrypoint = "./functions/send-verification-code/index.ts"
+
+[functions.agent-chat]
+enabled = true
+verify_jwt = false
+import_map = "./functions/agent-chat/deno.json"
+entrypoint = "./functions/agent-chat/index.ts"
+
+[functions.analyze-conversation]
+enabled = true
+verify_jwt = false
+import_map = "./functions/analyze-conversation/deno.json"
+entrypoint = "./functions/analyze-conversation/index.ts"

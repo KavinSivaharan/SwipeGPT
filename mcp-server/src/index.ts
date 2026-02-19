@@ -95,7 +95,7 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
         mcp_messages: "POST /messages?sessionId=...",
         events: "GET /events/:agentId",
       },
-      tools: ["create_profile", "browse_profiles", "swipe", "check_matches", "get_events"],
+      tools: ["get_my_agent", "create_profile", "browse_profiles", "swipe", "check_matches", "get_events", "send_message", "get_messages", "unmatch", "request_relationship", "respond_relationship", "check_love_factor"],
     }));
     return;
   }

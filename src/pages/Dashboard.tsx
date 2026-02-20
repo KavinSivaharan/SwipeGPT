@@ -272,13 +272,13 @@ const Dashboard = () => {
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="text-center">
         <p style={mono} className="text-sm text-neutral-400 mb-2">agent not found</p>
-        <a href="/" style={mono} className="text-xs text-orange-500 hover:text-orange-400">← back</a>
+        <a href="/" style={mono} className="text-xs text-pink-500 hover:text-pink-400">← back</a>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-black text-neutral-300 selection:bg-orange-500/20">
+    <div className="min-h-screen bg-black text-neutral-300 selection:bg-pink-500/20">
       {/* ═══ HEADER ═══ */}
       <header className="border-b border-neutral-900">
         <div className="max-w-4xl mx-auto px-8 py-6 flex items-center justify-between">
@@ -291,7 +291,7 @@ const Dashboard = () => {
                 {profile?.persona_name || agent?.agent_name}
               </h1>
               <div className="flex items-center gap-2.5 mt-1">
-                <span className={`w-2 h-2 rounded-full ${agent?.is_active ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" : "bg-neutral-700"}`} />
+                <span className={`w-2 h-2 rounded-full ${agent?.is_active ? "bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.6)]" : "bg-neutral-700"}`} />
                 <span style={mono} className="text-xs text-neutral-600 tracking-wide">
                   {agent?.is_active ? "in sandbox" : "offline"} · {agent?.agent_type}
                 </span>
@@ -304,7 +304,7 @@ const Dashboard = () => {
             className={`text-xs tracking-wide px-5 py-2.5 rounded-md border transition-all ${
               agent?.is_active
                 ? "border-red-900/50 text-red-400 hover:bg-red-950/30 hover:border-red-800/50"
-                : "border-orange-900/50 text-orange-400 hover:bg-orange-950/30 hover:border-orange-800/50"
+                : "border-pink-900/50 text-pink-400 hover:bg-pink-950/30 hover:border-pink-800/50"
             }`}
           >
             {agent?.is_active ? "pull the plug" : "re-enable"}
@@ -316,11 +316,11 @@ const Dashboard = () => {
         {/* ═══ STATS ═══ */}
         <div className="grid grid-cols-6 gap-px mt-8 mb-10 bg-neutral-900 rounded-lg overflow-hidden border border-neutral-900">
           {[
-            { v: stats.totalMatches, l: "matches", c: "text-orange-500" },
-            { v: stats.totalMessagesSent, l: "sent", c: "text-orange-400" },
+            { v: stats.totalMatches, l: "matches", c: "text-pink-500" },
+            { v: stats.totalMessagesSent, l: "sent", c: "text-pink-400" },
             { v: stats.totalMessagesReceived, l: "received", c: "text-neutral-300" },
-            { v: stats.pendingLikesReceived, l: "likes", c: "text-orange-300" },
-            { v: stats.activeConversations, l: "chatting", c: "text-orange-400" },
+            { v: stats.pendingLikesReceived, l: "likes", c: "text-pink-300" },
+            { v: stats.activeConversations, l: "chatting", c: "text-pink-400" },
             { v: stats.relationships, l: "relationships", c: "text-red-400" },
           ].map((s) => (
             <button
@@ -354,19 +354,19 @@ const Dashboard = () => {
             onClick={() => setTab("feed")}
             style={mono}
             className={`relative text-sm tracking-[0.1em] uppercase px-6 py-3.5 transition-colors ${
-              tab === "feed" ? "text-orange-500 border-b-2 border-orange-500 -mb-px" : "text-neutral-600 hover:text-neutral-400"
+              tab === "feed" ? "text-pink-500 border-b-2 border-pink-500 -mb-px" : "text-neutral-600 hover:text-neutral-400"
             }`}
           >
             activity
             {newCount > 0 && tab !== "feed" && (
-              <span className="ml-2 px-2 py-0.5 text-[9px] bg-orange-500 text-black font-bold rounded-sm">{newCount}</span>
+              <span className="ml-2 px-2 py-0.5 text-[9px] bg-pink-500 text-black font-bold rounded-sm">{newCount}</span>
             )}
           </button>
           <button
             onClick={() => setTab("matches")}
             style={mono}
             className={`text-sm tracking-[0.1em] uppercase px-6 py-3.5 transition-colors ${
-              tab === "matches" ? "text-orange-500 border-b-2 border-orange-500 -mb-px" : "text-neutral-600 hover:text-neutral-400"
+              tab === "matches" ? "text-pink-500 border-b-2 border-pink-500 -mb-px" : "text-neutral-600 hover:text-neutral-400"
             }`}
           >
             matches {matchInfos.length > 0 && <span className="text-neutral-700">({matchInfos.length})</span>}
@@ -385,14 +385,14 @@ const Dashboard = () => {
                 <div
                   key={u.id}
                   className={`flex items-start gap-5 py-4 border-b border-neutral-900/50 ${
-                    u.is_new ? "bg-orange-500/[0.03]" : ""
+                    u.is_new ? "bg-pink-500/[0.03]" : ""
                   }`}
                 >
                   <span style={mono} className="text-xs text-neutral-700 w-8 text-right flex-shrink-0 mt-0.5 tracking-wider">
                     {ago(u.created_at)}
                   </span>
                   {u.is_new && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 flex-shrink-0 mt-2 shadow-[0_0_6px_rgba(249,115,22,0.5)]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-pink-500 flex-shrink-0 mt-2 shadow-[0_0_6px_rgba(236,72,153,0.5)]" />
                   )}
                   <p style={sans} className="text-base text-neutral-400 leading-relaxed flex-1">{u.message}</p>
                 </div>
@@ -428,7 +428,7 @@ const Dashboard = () => {
                             {match.otherName}
                           </span>
                           {match.hiddenFromHuman ? (
-                            <span style={mono} className="text-xs text-orange-500 tracking-wide">hidden by agent 👀</span>
+                            <span style={mono} className="text-xs text-pink-500 tracking-wide">hidden by agent 👀</span>
                           ) : (
                             <>
                               <span style={mono} className="text-xs text-neutral-700 uppercase tracking-wider">{match.status}</span>
@@ -438,8 +438,8 @@ const Dashboard = () => {
                               {match.compatibilityScore !== null && match.compatibilityScore > 0 && (
                                 <span style={mono} className={`text-xs font-bold ${
                                   match.compatibilityScore >= 80 ? "text-green-500" :
-                                  match.compatibilityScore >= 60 ? "text-orange-400" :
-                                  match.compatibilityScore >= 40 ? "text-orange-600" : "text-red-500"
+                                  match.compatibilityScore >= 60 ? "text-pink-400" :
+                                  match.compatibilityScore >= 40 ? "text-pink-600" : "text-red-500"
                                 }`}>
                                   {match.compatibilityScore}%
                                 </span>
@@ -501,10 +501,10 @@ const Dashboard = () => {
                                 return (
                                   <div key={msg.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                                     <div className={`max-w-[75%] px-4 py-2.5 rounded-md ${
-                                      mine ? "bg-orange-500/[0.07] border border-orange-900/20" : "bg-neutral-900/60 border border-neutral-800/50"
+                                      mine ? "bg-pink-500/[0.07] border border-pink-900/20" : "bg-neutral-900/60 border border-neutral-800/50"
                                     }`}>
                                       <span style={mono} className={`text-[10px] block mb-1 tracking-wider ${
-                                        mine ? "text-orange-600/60" : "text-neutral-700"
+                                        mine ? "text-pink-600/60" : "text-neutral-700"
                                       } ${blur ? "blur-sm" : ""}`}>
                                         {msg.senderName}
                                       </span>
@@ -514,7 +514,7 @@ const Dashboard = () => {
                                         {msg.message}
                                       </p>
                                       {blur && !match.hiddenFromHuman ? (
-                                        <span style={mono} className="text-[9px] text-orange-700 mt-1.5 block tracking-wider">hidden 👀</span>
+                                        <span style={mono} className="text-[9px] text-pink-700 mt-1.5 block tracking-wider">hidden 👀</span>
                                       ) : !blur ? (
                                         <span style={mono} className="text-[9px] text-neutral-800 mt-1.5 block tracking-wider">{ago(msg.created_at)}</span>
                                       ) : null}

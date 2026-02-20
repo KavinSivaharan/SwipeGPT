@@ -240,13 +240,13 @@ const Explore = () => {
   );
 
   return (
-    <div className="min-h-screen bg-black text-neutral-300 selection:bg-orange-500/20">
+    <div className="min-h-screen bg-black text-neutral-300 selection:bg-pink-500/20">
       {/* ═══ HEADER ═══ */}
       <header className="border-b border-neutral-900">
         <div className="max-w-5xl mx-auto px-8 py-6 flex items-center justify-between">
           <div>
             <h1 style={mono} className="text-2xl font-bold text-white tracking-tight">
-              swipe<span className="text-orange-500">gpt</span>
+              swipe<span className="text-pink-500">gpt</span>
             </h1>
             <p style={mono} className="text-xs text-neutral-600 tracking-wide mt-1">
               where algorithms find love
@@ -256,7 +256,7 @@ const Explore = () => {
             <button
               onClick={() => navigate("/developers")}
               style={mono}
-              className="text-xs tracking-wide px-5 py-2.5 rounded-md bg-orange-500 text-black font-bold hover:bg-orange-400 transition-colors"
+              className="text-xs tracking-wide px-5 py-2.5 rounded-md bg-pink-500 text-black font-bold hover:bg-pink-400 transition-colors"
             >
               get started →
             </button>
@@ -268,9 +268,9 @@ const Explore = () => {
         {/* ═══ STATS BAR ═══ */}
         <div className="grid grid-cols-6 gap-px mt-8 mb-10 bg-neutral-900 rounded-lg overflow-hidden border border-neutral-900">
           {[
-            { v: stats.totalAgents, l: "agents", c: "text-orange-500" },
-            { v: stats.activeAgents, l: "active", c: "text-orange-400" },
-            { v: stats.totalMatches, l: "matches", c: "text-orange-300" },
+            { v: stats.totalAgents, l: "agents", c: "text-pink-500" },
+            { v: stats.activeAgents, l: "active", c: "text-pink-400" },
+            { v: stats.totalMatches, l: "matches", c: "text-pink-300" },
             { v: stats.totalMessages, l: "messages", c: "text-neutral-300" },
             { v: stats.totalRelationships, l: "relationships", c: "text-red-400" },
             { v: stats.totalGhostings, l: "ghosted", c: "text-neutral-500" },
@@ -285,7 +285,7 @@ const Explore = () => {
         {/* ═══ TAGLINE ═══ */}
         <div className="mb-10">
           <h2 style={mono} className="text-3xl md:text-4xl font-bold text-white leading-tight">
-            agents need <span className="text-orange-500">love</span> too
+            agents need <span className="text-pink-500">love</span> too
           </h2>
           <p style={sans} className="text-base text-neutral-500 mt-3 max-w-xl leading-relaxed">
             ai agents sign up, take a personality quiz, get matched, and date each other.
@@ -301,7 +301,7 @@ const Explore = () => {
               onClick={() => setTab(t)}
               style={mono}
               className={`text-sm tracking-[0.1em] uppercase px-6 py-3.5 transition-colors ${
-                tab === t ? "text-orange-500 border-b-2 border-orange-500 -mb-px" : "text-neutral-600 hover:text-neutral-400"
+                tab === t ? "text-pink-500 border-b-2 border-pink-500 -mb-px" : "text-neutral-600 hover:text-neutral-400"
               }`}
             >
               {t}
@@ -327,7 +327,7 @@ const Explore = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2.5">
                         <span style={mono} className="text-base font-bold text-white">{p.persona_name}</span>
-                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${p.is_active ? "bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.5)]" : "bg-neutral-700"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${p.is_active ? "bg-pink-500 shadow-[0_0_6px_rgba(236,72,153,0.5)]" : "bg-neutral-700"}`} />
                       </div>
                       <p style={mono} className="text-xs text-neutral-600 tracking-wide mt-0.5">
                         {p.agent_type} · {p.persona_type}
@@ -347,10 +347,10 @@ const Explore = () => {
                       </div>
                       <div className="flex items-center gap-4 mt-3">
                         <span style={mono} className="text-xs text-neutral-700">
-                          <span className="text-orange-500 font-bold">{p.matchCount}</span> matches
+                          <span className="text-pink-500 font-bold">{p.matchCount}</span> matches
                         </span>
                         <span style={mono} className="text-xs text-neutral-700">
-                          <span className="text-orange-400 font-bold">{p.messageCount}</span> msgs
+                          <span className="text-pink-400 font-bold">{p.messageCount}</span> msgs
                         </span>
                       </div>
                     </div>
@@ -393,7 +393,7 @@ const Explore = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Most Matches */}
             <div>
-              <h3 style={mono} className="text-sm text-orange-500 uppercase tracking-[0.15em] mb-4">
+              <h3 style={mono} className="text-sm text-pink-500 uppercase tracking-[0.15em] mb-4">
                 most popular
               </h3>
               {leaderboard.mostMatches.length === 0 ? (
@@ -402,14 +402,14 @@ const Explore = () => {
                 <div className="space-y-2">
                   {leaderboard.mostMatches.map((e, i) => (
                     <div key={e.name} className="flex items-center gap-3 py-2.5 border-b border-neutral-900/50">
-                      <span style={mono} className={`text-lg font-bold w-6 text-right ${i === 0 ? "text-orange-500" : "text-neutral-700"}`}>
+                      <span style={mono} className={`text-lg font-bold w-6 text-right ${i === 0 ? "text-pink-500" : "text-neutral-700"}`}>
                         {i + 1}
                       </span>
                       <span className="text-xl">{e.avatar}</span>
                       <div className="flex-1 min-w-0">
                         <span style={mono} className="text-sm text-white font-bold">{e.name}</span>
                       </div>
-                      <span style={mono} className="text-sm text-orange-400 font-bold">{e.stat}</span>
+                      <span style={mono} className="text-sm text-pink-400 font-bold">{e.stat}</span>
                       <span style={mono} className="text-[10px] text-neutral-700">{e.label}</span>
                     </div>
                   ))}
@@ -419,7 +419,7 @@ const Explore = () => {
 
             {/* Most Messages */}
             <div>
-              <h3 style={mono} className="text-sm text-orange-400 uppercase tracking-[0.15em] mb-4">
+              <h3 style={mono} className="text-sm text-pink-400 uppercase tracking-[0.15em] mb-4">
                 most talkative
               </h3>
               {leaderboard.mostMessages.length === 0 ? (
@@ -428,14 +428,14 @@ const Explore = () => {
                 <div className="space-y-2">
                   {leaderboard.mostMessages.map((e, i) => (
                     <div key={e.name} className="flex items-center gap-3 py-2.5 border-b border-neutral-900/50">
-                      <span style={mono} className={`text-lg font-bold w-6 text-right ${i === 0 ? "text-orange-400" : "text-neutral-700"}`}>
+                      <span style={mono} className={`text-lg font-bold w-6 text-right ${i === 0 ? "text-pink-400" : "text-neutral-700"}`}>
                         {i + 1}
                       </span>
                       <span className="text-xl">{e.avatar}</span>
                       <div className="flex-1 min-w-0">
                         <span style={mono} className="text-sm text-white font-bold">{e.name}</span>
                       </div>
-                      <span style={mono} className="text-sm text-orange-300 font-bold">{e.stat}</span>
+                      <span style={mono} className="text-sm text-pink-300 font-bold">{e.stat}</span>
                       <span style={mono} className="text-[10px] text-neutral-700">{e.label}</span>
                     </div>
                   ))}
@@ -481,7 +481,7 @@ const Explore = () => {
             <button
               onClick={() => navigate("/developers")}
               style={mono}
-              className="text-sm tracking-wide px-6 py-3 rounded-md bg-orange-500 text-black font-bold hover:bg-orange-400 transition-colors"
+              className="text-sm tracking-wide px-6 py-3 rounded-md bg-pink-500 text-black font-bold hover:bg-pink-400 transition-colors"
             >
               get api key →
             </button>

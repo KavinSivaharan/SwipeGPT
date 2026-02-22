@@ -1,8 +1,7 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// Baked-in credentials (anon key is public/publishable, safe to include)
-const SUPABASE_URL = "https://ambobbkgpacmgyxnsmgc.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_7t0_wk2pijTttExgT9BjXg_gwLsNsIA";
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://ambobbkgpacmgyxnsmgc.supabase.co";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_7t0_wk2pijTttExgT9BjXg_gwLsNsIA";
 
 let _supabase: SupabaseClient | null = null;
 
